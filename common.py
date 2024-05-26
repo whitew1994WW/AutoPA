@@ -6,10 +6,7 @@ from langchain_openai import ChatOpenAI
 
 llm = ChatOpenAI(model='gpt-4o')
 
-# Graph Internal State
-class ConversationStates(TypedDict):
-    caller_conversation: Annotated[Sequence[BaseMessage], operator.add]
-    boss_conversation: Annotated[Sequence[BaseMessage], operator.add]
+
 
 def convert_conversation_sequence_into_script(conversation: Sequence[BaseMessage], user_name: str) -> str:
     script = ""

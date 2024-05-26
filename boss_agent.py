@@ -6,18 +6,27 @@ from langgraph.prebuilt import ToolExecutor
 from langgraph.prebuilt import ToolInvocation
 from langchain_core.messages import ToolMessage
 import datetime
-from common import convert_conversation_sequence_into_script, log_prompt_output_to_langsmith, ConversationStates, llm
+from common import convert_conversation_sequence_into_script, log_prompt_output_to_langsmith, llm
 from generic_tools import get_potential_appointments, get_current_appointments, book_appointment, cancel_appointment
+from typing import TypedDict, Annotated, Sequence
+import operator
+from langchain_core.messages import BaseMessage
+from persistant_state import BOSS_CONVERSATION, CALLER_CONVERSATIONS
 
+class BossConversationStates(TypedDict):
+    boss_conversation: Annotated[Sequence[BaseMessage], operator.add]
 
 # Tools
 @tool
-def send_caller_message(message): 
+def send_caller_message(message: str, caller_name: str):
     """Send a message to the caller"""
+    if caller_name not in CALLER_CONVERSATIONS:
+        return f"Existing conversation with {caller_name} not found."
+    CALLER_CONVERSATIONS[caller_name].append(AIMessage(content=message))
     return f"Message sent to caller"
 
 # Edges
-def should_continue_boss(state: ConversationStates):
+def should_continue_boss(state: BossConversationStates):
     messages = state["boss_conversation"]
     last_message = messages[-1]
     if not last_message.tool_calls:
@@ -26,15 +35,14 @@ def should_continue_boss(state: ConversationStates):
         return "continue"
 
 # Nodes
-def call_boss_model(state: ConversationStates):
-    state["caller_conversation"] = convert_conversation_sequence_into_script(state["caller_conversation"], "Caller")
+def call_boss_model(state: BossConversationStates):
     state["current_time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     response = boss_model.invoke(state)
     log_prompt_output_to_langsmith(state, response, "boss_prompt")
     return {"boss_conversation": [response]}
 
 
-def call_boss_tool(state: ConversationStates):
+def call_boss_tool(state: BossConversationStates):
     messages = state["boss_conversation"]
     last_message = messages[-1]
     tool_invocations = []
@@ -45,8 +53,6 @@ def call_boss_tool(state: ConversationStates):
             tool_input=tool_call["args"],
         )
         tool_invocations.append(action)
-        if tool_call["name"] == "send_caller_message":
-            caller_messages.append(AIMessage(content=str(tool_call["args"]["message"])))
 
 
     action = ToolInvocation(
@@ -64,19 +70,16 @@ def call_boss_tool(state: ConversationStates):
     ]
 
     # We return a list, because this will get added to the existing list
-    return {"caller_conversation": caller_messages, "boss_conversation": tool_messages}
+    return {"boss_conversation": tool_messages}
     
     
 boss_pa_prompt = """You are a personal assistant bot. All messages that would be sent to your boss are instead sent to you. Follow your bosses instructions.
 
-If you are asked to book an appointment, use the tools provided to find the next available time. When you have found a time, confirm the time with the caller before booking the appointment.
+If you are asked to book an appointment by your boss, message the person who the appointment is for using the send_caller_message tool to continue the conversation with them seperately.
 
 Current time: {current_time}
 
-In this conversation you are speaking with the boss, but can see what the ongoing caller has said previously below
-
-Caller Conversation:
-{caller_conversation}
+In this conversation you are speaking with the boss.
 """
 boss_chat_template = ChatPromptTemplate.from_messages([
     ("system", boss_pa_prompt),
@@ -88,7 +91,7 @@ boss_model = boss_chat_template | llm.bind_tools(boss_tools)
 
 
 # Graph 
-boss_workflow = StateGraph(ConversationStates)
+boss_workflow = StateGraph(BossConversationStates)
 
 boss_workflow.add_node("agent", call_boss_model)
 boss_workflow.add_node("action", call_boss_tool)

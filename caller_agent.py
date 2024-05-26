@@ -6,17 +6,26 @@ from langgraph.prebuilt import ToolExecutor
 from langgraph.prebuilt import ToolInvocation
 from langchain_core.messages import ToolMessage
 import datetime
-from common import convert_conversation_sequence_into_script, log_prompt_output_to_langsmith, ConversationStates, llm
+from common import convert_conversation_sequence_into_script, log_prompt_output_to_langsmith, llm
 from generic_tools import get_potential_appointments, get_current_appointments, book_appointment, cancel_appointment
-
+from typing import TypedDict, Annotated, Sequence
+import operator
+from langchain_core.messages import BaseMessage
+from persistant_state import BOSS_CONVERSATION
    
+# Graph Internal State
+class CallerConversationStates(TypedDict):
+    caller_conversation: Annotated[Sequence[BaseMessage], operator.add]
+    boss_conversation: Annotated[Sequence[BaseMessage], operator.add]
+
 @tool
 def send_boss_message(message: str): 
     """Send a message to the boss"""
+    BOSS_CONVERSATION.append(AIMessage(content=message))
     return f"Message sent to boss"
 
 # Edges
-def should_continue_caller(state: ConversationStates):
+def should_continue_caller(state: CallerConversationStates):
     messages = state["caller_conversation"]
     last_message = messages[-1]
     if not last_message.tool_calls:
@@ -25,8 +34,8 @@ def should_continue_caller(state: ConversationStates):
         return "continue"
 
 # Nodes
-def call_caller_model(state: ConversationStates):
-    # messages = state["caller_conversation"]
+def call_caller_model(state: CallerConversationStates):
+    print(state["boss_conversation"])
     state["boss_conversation"] = convert_conversation_sequence_into_script(state["boss_conversation"], "Boss")
     state["current_time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     response = caller_model.invoke(state)
@@ -34,7 +43,7 @@ def call_caller_model(state: ConversationStates):
     return {"caller_conversation": [response]}
 
 
-def call_caller_tool(state: ConversationStates):
+def call_caller_tool(state: CallerConversationStates):
     messages = state["caller_conversation"]
     last_message = messages[-1]
     tool_invocations = []
@@ -46,9 +55,7 @@ def call_caller_tool(state: ConversationStates):
         )
         tool_invocations.append(action)
         if tool_call["name"] == "send_boss_message":
-            tool_call["args"]["message"]
-            boss_messages.append(AIMessage(content=str(tool_call["args"]["message"])))
-
+            boss_messages.append(AIMessage(content=tool_call["args"]["message"]))
 
     action = ToolInvocation(
         tool=tool_call["name"],
@@ -98,7 +105,7 @@ caller_model = caller_chat_template | llm.bind_tools(caller_tools)
 
 
 # Graph 
-caller_workflow = StateGraph(ConversationStates)
+caller_workflow = StateGraph(CallerConversationStates)
 
 caller_workflow.add_node("agent", call_caller_model)
 caller_workflow.add_node("action", call_caller_tool)

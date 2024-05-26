@@ -77,4 +77,3 @@ class AppointmentManager:
                 return f"Appointment at {time} cancelled"
         return f"No appointment found at {time}"
     
-APPOINTMENT_MANAGER = AppointmentManager()

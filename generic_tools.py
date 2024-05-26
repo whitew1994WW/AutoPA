@@ -1,6 +1,6 @@
-from external_apis import Appointment, APPOINTMENT_MANAGER
+from external_apis import Appointment
+from persistant_state import APPOINTMENT_MANAGER
 from langchain_core.tools import tool
-from external_apis import Appointment, APPOINTMENT_MANAGER
 import datetime
 from typing import List, Optional
 
