@@ -41,11 +41,15 @@ class AppointmentManager:
 
 
     def check_availability(self, time: datetime.datetime, length=30):
-        """"Always available 9 - 5 Monday to friday"""
-        available = False
-        if 9 <= time.hour < 17:
-            available = True
-        return available
+        """"Available 9 - 5 Monday to friday when there are no existing appointments"""
+        if time.weekday() > 4 or time.hour < 9 or time.hour > 17:
+            return False
+        for appointment in self.booked_appointments:
+            if appointment.time <= time < appointment.time + datetime.timedelta(minutes=appointment.length):
+                return False
+            if time <= appointment.time < time + datetime.timedelta(minutes=length):
+                return False
+        return True
 
     def book_appointment(self, time: datetime.datetime, length=30, appointment_name=None, appointee_name=None):
         # Check if the appointment is available
@@ -99,7 +103,7 @@ class ContactManager:
     def add_or_update_contact(self, name: str, phone_number: str=None, email: str=None, notes: str=None):
         # Get any current contact details associated with the name, number, or email and then merge the new details
         for contact in self.contacts:
-            if contact.name == name or contact.phone_number == phone_number or contact.email == email:
+            if (name and contact.name == name) or (phone_number and contact.phone_number == phone_number) or (email and contact.email == email):
                 if phone_number:
                     contact.phone_number = phone_number
                 if email:

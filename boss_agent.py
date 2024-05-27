@@ -11,7 +11,7 @@ from generic_tools import get_potential_appointments, get_current_appointments, 
 from typing import TypedDict, Annotated, Sequence
 import operator
 from langchain_core.messages import BaseMessage
-from persistant_state import BOSS_CONVERSATION, CALLER_CONVERSATIONS
+from persistant_state import BOSS_CONVERSATION, CALLER_CONVERSATIONS, CONTACT_MANAGER
 
 class BossConversationStates(TypedDict):
     boss_conversation: Annotated[Sequence[BaseMessage], operator.add]
@@ -20,9 +20,10 @@ class BossConversationStates(TypedDict):
 @tool
 def send_caller_message(message: str, caller_name: str):
     """Send a message to the caller"""
-    if caller_name not in CALLER_CONVERSATIONS:
-        return f"Existing conversation with {caller_name} not found."
-    CALLER_CONVERSATIONS[caller_name].append(AIMessage(content=message))
+    contact = CONTACT_MANAGER.get_contact(name=caller_name)
+    if contact.phone_number not in CALLER_CONVERSATIONS:
+        CALLER_CONVERSATIONS[contact.phone_number] = []
+    CALLER_CONVERSATIONS[contact.phone_number].append(AIMessage(content=message))
     return f"Message sent to caller"
 
 # Edges

@@ -34,7 +34,7 @@ def get_current_appointments(month: int, day: int, year: int,appointee_name: Opt
     """
     start_date = datetime.datetime(year, month, day)
     end_date = start_date + datetime.timedelta(days=1)
-    return APPOINTMENT_MANAGER.get_booked_appointments_between(start_date, end_date, appointee_name)
+    return [str(appt) for appt in APPOINTMENT_MANAGER.get_booked_appointments_between(start_date, end_date, appointee_name)]
 
 @tool
 def book_appointment(day: int, month: int, year: int, hour: int, minutes: int, appointment_name: str, appointee_name: str, length: int = 30):

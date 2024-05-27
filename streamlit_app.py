@@ -31,7 +31,7 @@ def submit_form():
     """Handle form submission."""
     appointment_time = datetime(int(datetime.now().year), int(st.session_state.month), int(st.session_state.day), int(st.session_state.time[:2]), int(st.session_state.time[3:5]))
     duration = int(st.session_state.duration)
-    APPOINTMENT_MANAGER.book_appointment(appointment_time, duration)
+    APPOINTMENT_MANAGER.book_appointment(appointment_time, duration, st.session_state.appointee_name)
 
 def main():
     st.set_page_config(layout="wide")
@@ -59,6 +59,7 @@ def main():
         start_time_input = st.text_input("Appointment time", key="time", value=f"{datetime.now().hour}:00")
 
         duration_input = st.text_input("Duration (minutes)", key="duration", value="30")
+        apointee_name = st.text_input("Appointee Name", key="appointee_name")
         # Submit button for the form
         submitted = st.form_submit_button("Submit", on_click=submit_form)
         if submitted:
