@@ -3,21 +3,37 @@ from langsmith import Client
 from langchain.adapters.openai import convert_message_to_dict
 from boss_agent import boss_app
 from caller_agent import caller_app
-from persistant_state import BOSS_CONVERSATION, CALLER_CONVERSATIONS
+from persistant_state import BOSS_CONVERSATION, CALLER_CONVERSATIONS, CONTACT_MANAGER
+from IPython.display import Image
 
 
 class DualChatAgent:
     @staticmethod
-    def receive_message_from_caller(message, caller_name):
-        CALLER_CONVERSATIONS[caller_name].append(HumanMessage(content=message, type="human"))
+    def get_caller_graph_image() -> Image:
+        return Image(caller_app.get_graph(xray=True).draw_mermaid_png())
+    
+    @staticmethod
+    def get_boss_graph_image() -> Image:
+        return Image(boss_app.get_graph(xray=True).draw_mermaid_png())
+    
+    @staticmethod
+    def receive_message_from_caller(message, caller_number):
+        CALLER_CONVERSATIONS[caller_number].append(HumanMessage(content=message, type="human"))
+        if CONTACT_MANAGER.is_contact_in_list(phone_number=caller_number):
+            contact = CONTACT_MANAGER.get_contact(phone_number=caller_number)
+            print(f"Contact found: {contact}")
+        else:
+            print("Contact not found")
+            contact = ""
         state = {
-            "caller_conversation": CALLER_CONVERSATIONS[caller_name],
-            "boss_conversation": BOSS_CONVERSATION
+            "caller_conversation": CALLER_CONVERSATIONS[caller_number],
+            "boss_conversation": BOSS_CONVERSATION,
+            "contact_details": str(contact)
         }
         new_state = caller_app.invoke(state)
         new_state['BOSS_CONVERSATION'] = BOSS_CONVERSATION
         DualChatAgent.log_caller_graph_to_langsmith(state, new_state, "caller_graph")
-        CALLER_CONVERSATIONS[caller_name].extend(new_state["caller_conversation"][len(CALLER_CONVERSATIONS[caller_name]):])
+        CALLER_CONVERSATIONS[caller_number].extend(new_state["caller_conversation"][len(CALLER_CONVERSATIONS[caller_number]):])
     
     @staticmethod
     def receive_message_from_boss(message):

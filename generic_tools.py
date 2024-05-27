@@ -1,5 +1,5 @@
 from external_apis import Appointment
-from persistant_state import APPOINTMENT_MANAGER
+from persistant_state import APPOINTMENT_MANAGER, CONTACT_MANAGER
 from langchain_core.tools import tool
 import datetime
 from typing import List, Optional
@@ -63,3 +63,37 @@ def cancel_appointment(appointment_time: str):
     """
     return APPOINTMENT_MANAGER.cancel_appointment(datetime.datetime.strptime(appointment_time, "%Y-%m-%d %H:%M"))
 
+@tool
+def add_or_update_contact(name: str, number: Optional[str] = None, email: Optional[str] = None, notes: Optional[str] = None):
+    """Add or update a contact to the list of known contacts.
+    Args:
+        name: A string representing the name of the contact
+        number: An optional string representing the phone number of the contact
+        email: An optional string representing the email of the contact
+        notes: An optional string representing any notes about the contact
+    Returns:
+        A string indicating the contact was added
+    """
+    return CONTACT_MANAGER.add_or_update_contact(name, number, email, notes)
+
+@tool
+def get_contact(name: Optional[str] = None, number: Optional[str] = None, email: Optional[str] = None):
+    """Get a contact from the list of known contacts.
+    Args:
+        name: An optional string representing the name of the contact
+        number: An optional string representing the phone number of the contact
+        email: An optional string representing the email of the contact
+    Returns:
+        A string representing the contact information
+    """
+    return CONTACT_MANAGER.get_contact(name, number, email)
+
+@tool
+def delete_contact(name: str):
+    """Delete a contact from the list of known contacts.
+    Args:
+        name: A string representing the name of the contact
+    Returns:
+        A string indicating the contact was deleted
+    """
+    return CONTACT_MANAGER.delete_contact(name)

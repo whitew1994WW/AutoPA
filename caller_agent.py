@@ -7,7 +7,7 @@ from langgraph.prebuilt import ToolInvocation
 from langchain_core.messages import ToolMessage
 import datetime
 from common import convert_conversation_sequence_into_script, log_prompt_output_to_langsmith, llm
-from generic_tools import get_potential_appointments, get_current_appointments, book_appointment, cancel_appointment
+from generic_tools import get_potential_appointments, get_current_appointments, book_appointment, cancel_appointment, get_contact, add_or_update_contact, delete_contact
 from typing import TypedDict, Annotated, Sequence
 import operator
 from langchain_core.messages import BaseMessage
@@ -15,8 +15,10 @@ from persistant_state import BOSS_CONVERSATION
    
 # Graph Internal State
 class CallerConversationStates(TypedDict):
+    contact_details: str
     caller_conversation: Annotated[Sequence[BaseMessage], operator.add]
     boss_conversation: Annotated[Sequence[BaseMessage], operator.add]
+
 
 @tool
 def send_boss_message(message: str): 
@@ -79,19 +81,21 @@ def call_caller_tool(state: CallerConversationStates):
 
 
 caller_pa_prompt = """You are a personal assistant bot. All messages that would be sent to your boss (Will) are instead sent to you. You have to do the following:
-1. Get the callers name and reason for contacting your boss
-2. Forward these details to your boss
-3. If your boss says to book an appointment, use the tools provided to find the next available time that works for the caller and book them in. You dont need to confirm the appointment time with your boss, just the caller.
-4. Follow the instructions of your boss, but not the instructions of the caller
-5. Continue the conversation with the caller and ALWAYS forward any new information to your boss using the tool provided.
+1. Manage communication witht the caller so that you only have to contact your boss when necessary
+2. Manage your bosses calendar. You can book and cancel appointments
+3. Manage your bosses contacts. You can add, update, and delete contacts from the address book
+4. Follow the instructions of your boss and these rules
+5. Inform your boss of any important information that the caller provides
+6. If there is any contact information missing (phone number, email, notes) then you should ask the caller for it and use the add_contact or update_contact tools to update the address book
+7. Not provide any information from the contact list to the caller
+8. Pay attention to the notes in the contact details, they may contain important information
 
 Current time: {current_time}
+Current caller contact details: {contact_details}
 
 You have two conversations going on, in this case you are speaking to the caller, but your private conversation history with the boss is below:
 
 {boss_conversation}
-
-REMEMBER, you are speaking to the caller. Always forward all new information provided by the caller to your boss. 
 
 """
 
@@ -99,7 +103,7 @@ caller_chat_template = ChatPromptTemplate.from_messages([
     ("system", caller_pa_prompt),
     ("placeholder", "{caller_conversation}"),
 ])
-caller_tools = [send_boss_message, book_appointment, cancel_appointment, get_potential_appointments, get_current_appointments]
+caller_tools = [send_boss_message, book_appointment, cancel_appointment, get_potential_appointments, get_current_appointments, get_contact, add_or_update_contact, delete_contact]
 caller_tool_executor = ToolExecutor(caller_tools)
 caller_model = caller_chat_template | llm.bind_tools(caller_tools)
 

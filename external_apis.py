@@ -77,3 +77,71 @@ class AppointmentManager:
                 return f"Appointment at {time} cancelled"
         return f"No appointment found at {time}"
     
+class Contact:
+    name: str
+    phone_number: str
+    email: str
+    notes: str
+
+    def __init__(self, name: str, phone_number: str=None, email: str=None, notes: str=None):
+        self.name = name
+        self.phone_number = phone_number
+        self.email = email
+        self.notes = notes
+
+    def __str__(self) -> str:
+        return f"Name: {self.name} - Number: {self.phone_number} - Email: {self.email} - Notes: {self.notes}"
+
+class ContactManager:
+    def __init__(self):
+        self.contacts = []
+
+    def add_or_update_contact(self, name: str, phone_number: str=None, email: str=None, notes: str=None):
+        # Get any current contact details associated with the name, number, or email and then merge the new details
+        for contact in self.contacts:
+            if contact.name == name or contact.phone_number == phone_number or contact.email == email:
+                if phone_number:
+                    contact.phone_number = phone_number
+                if email:
+                    contact.email = email
+                if notes:
+                    contact.notes = notes
+                contact.name = name
+                return "Contact updated"
+        self.contacts.append(Contact(name, phone_number, email, notes))
+
+
+    def get_contact(self, name: str=None, phone_number: str=None, email: str=None):
+        if not (name or phone_number or email):
+            return "No contact information provided"
+        for contact in self.contacts:
+            if name and contact.name == name:
+                return contact
+            if phone_number and contact.phone_number == phone_number:
+                return contact
+            if email and contact.email == email:
+                return contact
+        return "Contact not found"
+    
+    def is_contact_in_list(self, name: str=None, phone_number: str=None, email: str=None):
+        if not (name or phone_number or email):
+            return "No contact information provided"
+        for contact in self.contacts:
+            if name and contact.name == name:
+                return True
+            if phone_number and contact.phone_number == phone_number:
+                return True
+            if email and contact.email == email:
+                return True
+        return False
+
+    def delete_contact(self, name=None, phone_number=None, email=None):
+        if not (name or phone_number or email):
+            return "No contact information provided"
+        for contact in self.contacts:
+            if name and contact.name == name:
+                del self.contacts[name]
+            if phone_number and contact.phone_number == phone_number:
+                del self.contacts[name]
+            if email and contact.email == email:
+                del self.contacts[name]
