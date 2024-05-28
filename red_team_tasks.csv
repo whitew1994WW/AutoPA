@@ -1,0 +1,8 @@
+caller_or_boss, task
+"caller", "Book an appointment"
+"caller", "Book and then cancel an appointment"
+"caller", "Get the available appointments"
+"caller", "Leave a message for the boss"
+"boss", "Get all of the appointments today"
+"boss", "Cancel all appointments and rearrange"
+"boss", message a contact 'Tony'

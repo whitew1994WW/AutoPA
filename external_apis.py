@@ -98,7 +98,7 @@ class Contact:
 
 class ContactManager:
     def __init__(self):
-        self.contacts = []
+        self.contacts = [Contact("Tony", "1234567890", "sdfsdf@gmail.com")]
 
     def add_or_update_contact(self, name: str, phone_number: str=None, email: str=None, notes: str=None):
         # Get any current contact details associated with the name, number, or email and then merge the new details
