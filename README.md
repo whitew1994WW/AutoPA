@@ -11,10 +11,10 @@ Its powered with LangGraph and ChatGPT. There is an agent that handles the incom
 
 See the below videos for a few examples of the functionality:
 
+https://github.com/whitew1994WW/AutoPA/assets/33956588/520ed703-c00b-4aeb-956e-64b9b9ba1ee0
 
-- [AutoPA Demo](/examples/2024-05-29%2019-32-08.mp4)
+https://github.com/whitew1994WW/AutoPA/assets/33956588/ece35575-5c6d-4010-8bd0-209a33d10ec8
 
-- [AutoPA Demo 2](/examples/2024-05-29%2019-37-57.mp4)
 
 The calendar and appointments are mocked out to make for fast development.
 
