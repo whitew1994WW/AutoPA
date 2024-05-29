@@ -32,9 +32,7 @@ I also added a feature for testing out the functionality of the assistant. You c
 
 You can add additional tasks or make the prompts harder if you wanted to try and break the assistant.
 
-[red teaming](/examples/image.png)
-
-
+![image](https://github.com/whitew1994WW/AutoPA/assets/33956588/ecee9603-8e08-4f33-85aa-04837b00990b)
 
 
 
