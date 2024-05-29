@@ -128,7 +128,7 @@ def main():
         st.write([str(contact) for contact in contacts])
 
     with col1:
-        st.image(DualChatAgent.get_caller_graph_image().data)
+        # st.image(DualChatAgent.get_caller_graph_image().data)
         st.subheader("Caller & PA")
         st.text_input("Caller:", key="input_caller", on_change=lambda: caller_sent_message())
         if caller_number is not None and caller_number in CALLER_CONVERSATIONS:
@@ -148,7 +148,7 @@ def main():
 
 
     with col2:
-        st.image(DualChatAgent.get_boss_graph_image().data)
+        # st.image(DualChatAgent.get_boss_graph_image().data)
         st.subheader("PA & Boss")
         st.text_input("Boss:", key="input_boss", on_change=lambda: boss_sent_message())
         for message in BOSS_CONVERSATION:
